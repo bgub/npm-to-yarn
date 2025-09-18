@@ -329,7 +329,32 @@ describe('NPM tests', () => {
       'pnpm pack --pack-destination foobar',
       "npm pack --pack-destination foobar\n# couldn't auto-convert command",
     ],
-  ];
+    //chaining commands
+    [
+      'npm uninstall --save-dev semver && npm install --save semver',
+      'yarn remove --dev semver && yarn add semver',
+      'pnpm remove --save-dev semver && pnpm add semver',
+      'bun remove --dev semver && bun add semver',
+    ],
+    [
+      'npm uninstall --save-dev semver&& npm install --save semver',
+      'yarn remove --dev semver && yarn add semver',
+      'pnpm remove --save-dev semver && pnpm add semver',
+      'bun remove --dev semver && bun add semver',
+    ],
+    [
+      'npm uninstall --save-dev semver &&npm install --save semver',
+      'yarn remove --dev semver && yarn add semver',
+      'pnpm remove --save-dev semver && pnpm add semver',
+      'bun remove --dev semver && bun add semver',
+    ],
+    [
+      'npm uninstall --save-dev semver&&npm install --save semver',
+      'yarn remove --dev semver && yarn add semver',
+      'pnpm remove --save-dev semver && pnpm add semver',
+      'bun remove --dev semver && bun add semver',
+    ],
+  ]
 
   describe('to Yarn', () => {
     it.each(tests)('%s', (npmValue, yarnValue) => {
