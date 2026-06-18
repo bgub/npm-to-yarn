@@ -69,9 +69,8 @@ export function npmToDeno (_m: string, command: string): string {
       break
     case 'update':
     case 'up':
-      // `npm update` -> `deno outdated --update`
-      args[0] = 'outdated'
-      args.splice(1, 0, '--update')
+      // `npm update` -> `deno update` (alias of `deno outdated --update`)
+      args[0] = 'update'
       break
     case 'run':
       // `npm run <script>` -> `deno task <script>`

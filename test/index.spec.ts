@@ -687,8 +687,8 @@ describe('NPM to Deno tests', () => {
     // ci / outdated / update
     ['npm ci', 'deno ci'],
     ['npm outdated', 'deno outdated'],
-    ['npm update', 'deno outdated --update'],
-    ['npm update foo', 'deno outdated --update foo'],
+    ['npm update', 'deno update'],
+    ['npm update foo', 'deno update foo'],
     // run / test / start / stop
     ['npm run', 'deno task'],
     ['npm run build', 'deno task build'],
