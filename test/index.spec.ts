@@ -676,8 +676,8 @@ describe('NPM to Deno tests', () => {
     ['npm install squirrelly --save', 'deno add squirrelly'],
     ['npm install squirrelly --save-exact', 'deno add squirrelly'],
     ['npm install squirrelly --no-save', 'deno add squirrelly'],
-    ['npm install -g squirrelly', 'deno install -g npm:squirrelly'],
-    ['npm install squirrelly -g', 'deno install -g npm:squirrelly'],
+    ['npm install -g squirrelly', 'deno install -g squirrelly'],
+    ['npm install squirrelly -g', 'deno install -g squirrelly'],
     // uninstall / remove
     ['npm uninstall squirrelly', 'deno remove squirrelly'],
     ['npm remove squirrelly', 'deno remove squirrelly'],
@@ -686,26 +686,26 @@ describe('NPM to Deno tests', () => {
     // run / test / start / stop
     ['npm run', 'deno task'],
     ['npm run build', 'deno task build'],
-    ['npm test', 'deno test'],
-    ['npm t', 'deno test'],
+    ['npm test', 'deno task test'],
+    ['npm t', 'deno task test'],
     ['npm start', 'deno task start'],
     ['npm stop', 'deno task stop'],
     // init / create
     ['npm init', 'deno init'],
     ['npm init -y', 'deno init -y'],
-    ['npm init esm --yes', 'deno run -A npm:create-esm --yes'],
-    ['npm create vite', 'deno run -A npm:create-vite'],
-    ['npm create @scope/foo', 'deno run -A npm:@scope/create-foo'],
+    ['npm init esm --yes', 'deno create esm --yes'],
+    ['npm create vite', 'deno create vite'],
+    ['npm create @scope/foo', 'deno create @scope/foo'],
     // exec
-    ['npm exec custom', 'deno run -A npm:custom'],
-    ['npm exec custom -- --version', 'deno run -A npm:custom --version'],
-    // npx -> deno run
-    ['npx create-next-app', 'deno run -A npm:create-next-app'],
-    ['npx prettier --help', 'deno run -A npm:prettier --help'],
-    ['npx prettier -w .', 'deno run -A npm:prettier -w .'],
+    ['npm exec custom', 'deno x custom'],
+    ['npm exec custom -- --version', 'deno x custom --version'],
+    // npx -> deno x
+    ['npx create-next-app', 'deno x create-next-app'],
+    ['npx prettier --help', 'deno x prettier --help'],
+    ['npx prettier -w .', 'deno x prettier -w .'],
     [
       'npx @neutrinojs/create-project my-app',
-      'deno run -A npm:@neutrinojs/create-project my-app',
+      'deno x @neutrinojs/create-project my-app',
     ],
     // no clean Deno equivalent -> keep npm command
     ['npm ci', "npm ci\n# couldn't auto-convert command"],

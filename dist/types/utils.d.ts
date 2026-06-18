@@ -6,4 +6,5 @@ export declare const executorCommands: {
     yarn: string;
     pnpm: string;
     bun: string;
+    deno: string;
 };

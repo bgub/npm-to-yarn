@@ -42,7 +42,7 @@ convert('npx create-next-app', 'yarn')
 // yarn dlx create-next-app
 
 convert('npx create-next-app', 'deno')
-// deno run -A npm:create-next-app
+// deno x create-next-app
 ```
 
 `npm-to-yarn` exposes a UMD build, so you can also install it with a CDN (it exposes global variable `n2y`)

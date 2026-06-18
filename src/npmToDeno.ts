@@ -40,12 +40,9 @@ export function npmToDeno (_m: string, command: string): string {
       if (args.length === 1) {
         args = ['install']
       } else if (args.some(a => a === '-g' || a === '--global')) {
-        // Global installs map to Deno's global tool installer, which needs an
-        // explicit `npm:` specifier since there is no local config to resolve from.
-        const rest = args.slice(1).filter(a => a !== '-g' && a !== '--global')
-        const packages = rest.filter(a => !a.startsWith('-')).map(p => `npm:${p}`)
-        const flags = rest.filter(a => a.startsWith('-'))
-        args = ['install', '-g'].concat(packages).concat(flags)
+        // Global installs map to Deno's global tool installer.
+        const packages = args.slice(1).filter(a => !a.startsWith('-'))
+        args = ['install', '-g'].concat(packages)
       } else {
         args[0] = 'add'
         args = convertInstallArgs(args)
@@ -68,7 +65,9 @@ export function npmToDeno (_m: string, command: string): string {
     case 'test':
     case 't':
     case 'tst':
+      // `npm test` runs the `test` script -> `deno task test`
       args[0] = 'test'
+      args.unshift('task')
       break
     case 'start':
     case 'stop':
@@ -77,31 +76,17 @@ export function npmToDeno (_m: string, command: string): string {
       break
     case 'init':
     case 'create':
-      if (args[1]) {
-        if (args[1].startsWith('@')) {
-          // `npm init @scope/foo` -> `deno run -A npm:@scope/create-foo`
-          cmd = 'deno run -A'
-          args[1] = `npm:${args[1].replace('/', '/create-')}`
-          args = args.slice(1)
-        } else if (!args[1].startsWith('-')) {
-          // `npm create foo` -> `deno run -A npm:create-foo`
-          cmd = 'deno run -A'
-          args[1] = `npm:create-${args[1].replace('@latest', '')}`
-          args = args.slice(1)
-        } else {
-          args[0] = 'init'
-        }
+      // `npm init`/`npm create <starter>` -> `deno init`/`deno create <starter>`
+      if (args[1] && !args[1].startsWith('-')) {
+        args[0] = 'create'
       } else {
         args[0] = 'init'
       }
       break
     case 'exec':
-      // `npm exec <pkg>` -> `deno run -A npm:<pkg>`
-      cmd = 'deno run -A'
+      // `npm exec <pkg>` -> `deno x <pkg>`
       args.splice(0, 1)
-      if (args[0]) {
-        args[0] = `npm:${args[0]}`
-      }
+      args.unshift('x')
       break
     default:
       // No clean Deno equivalent; keep the npm command.

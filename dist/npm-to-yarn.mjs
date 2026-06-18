@@ -51,7 +51,8 @@ var executorCommands = {
     npm: 'npx',
     yarn: 'yarn dlx',
     pnpm: 'pnpm dlx',
-    bun: 'bun x'
+    bun: 'bun x',
+    deno: 'deno x'
 };
 
 function parse(command) {
@@ -673,12 +674,9 @@ function npmToDeno(_m, command) {
                 args = ['install'];
             }
             else if (args.some(function (a) { return a === '-g' || a === '--global'; })) {
-                // Global installs map to Deno's global tool installer, which needs an
-                // explicit `npm:` specifier since there is no local config to resolve from.
-                var rest = args.slice(1).filter(function (a) { return a !== '-g' && a !== '--global'; });
-                var packages = rest.filter(function (a) { return !a.startsWith('-'); }).map(function (p) { return "npm:".concat(p); });
-                var flags = rest.filter(function (a) { return a.startsWith('-'); });
-                args = ['install', '-g'].concat(packages).concat(flags);
+                // Global installs map to Deno's global tool installer.
+                var packages = args.slice(1).filter(function (a) { return !a.startsWith('-'); });
+                args = ['install', '-g'].concat(packages);
             }
             else {
                 args[0] = 'add';
@@ -700,7 +698,9 @@ function npmToDeno(_m, command) {
         case 'test':
         case 't':
         case 'tst':
+            // `npm test` runs the `test` script -> `deno task test`
             args[0] = 'test';
+            args.unshift('task');
             break;
         case 'start':
         case 'stop':
@@ -709,34 +709,18 @@ function npmToDeno(_m, command) {
             break;
         case 'init':
         case 'create':
-            if (args[1]) {
-                if (args[1].startsWith('@')) {
-                    // `npm init @scope/foo` -> `deno run -A npm:@scope/create-foo`
-                    cmd = 'deno run -A';
-                    args[1] = "npm:".concat(args[1].replace('/', '/create-'));
-                    args = args.slice(1);
-                }
-                else if (!args[1].startsWith('-')) {
-                    // `npm create foo` -> `deno run -A npm:create-foo`
-                    cmd = 'deno run -A';
-                    args[1] = "npm:create-".concat(args[1].replace('@latest', ''));
-                    args = args.slice(1);
-                }
-                else {
-                    args[0] = 'init';
-                }
+            // `npm init`/`npm create <starter>` -> `deno init`/`deno create <starter>`
+            if (args[1] && !args[1].startsWith('-')) {
+                args[0] = 'create';
             }
             else {
                 args[0] = 'init';
             }
             break;
         case 'exec':
-            // `npm exec <pkg>` -> `deno run -A npm:<pkg>`
-            cmd = 'deno run -A';
+            // `npm exec <pkg>` -> `deno x <pkg>`
             args.splice(0, 1);
-            if (args[0]) {
-                args[0] = "npm:".concat(args[0]);
-            }
+            args.unshift('x');
             break;
         default:
             // No clean Deno equivalent; keep the npm command.
@@ -762,12 +746,6 @@ function convert(str, to) {
                 : str.includes('pnpm dlx')
                     ? 'pnpm dlx'
                     : 'bun x';
-        if (to === 'deno') {
-            // Deno runs one-off binaries with `deno run -A npm:<pkg>`; the `npm:`
-            // specifier attaches directly to the package, so consume the executor's
-            // trailing space too.
-            return str.replace("".concat(executor, " "), 'deno run -A npm:');
-        }
         return str.replace(executor, executorCommands[to]);
     }
     else if (to === 'npm') {
