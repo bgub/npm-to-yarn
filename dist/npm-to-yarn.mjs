@@ -209,7 +209,7 @@ function yarnToNPM(_m, command) {
     }
 }
 
-function convertInstallArgs$1(args) {
+function convertInstallArgs$2(args) {
     if (args.includes('--global') || args.includes('-g')) {
         args.unshift('global');
     }
@@ -245,14 +245,14 @@ var npmToYarnTable = {
             return ['install'];
         }
         args[0] = 'add';
-        return convertInstallArgs$1(args);
+        return convertInstallArgs$2(args);
     },
     i: function (args) {
         return npmToYarnTable.install(args);
     },
     uninstall: function (args) {
         args[0] = 'remove';
-        return convertInstallArgs$1(args);
+        return convertInstallArgs$2(args);
     },
     un: function (args) {
         return npmToYarnTable.uninstall(args);
@@ -509,7 +509,7 @@ function npmToPnpm(_m, command) {
     }
 }
 
-function convertInstallArgs(args) {
+function convertInstallArgs$1(args) {
     // bun uses -g and --global flags
     // bun mostly conforms to Yarn's CLI
     return args.map(function (item) {
@@ -557,7 +557,7 @@ function npmToBun(_m, command) {
             else {
                 args[0] = 'add';
             }
-            args = convertInstallArgs(args);
+            args = convertInstallArgs$1(args);
             break;
         case 'uninstall':
         case 'un':
@@ -565,7 +565,7 @@ function npmToBun(_m, command) {
         case 'r':
         case 'rm':
             args[0] = 'remove';
-            args = convertInstallArgs(args);
+            args = convertInstallArgs$1(args);
             break;
         case 'cache':
             if (args[1] === 'clean') {
@@ -585,7 +585,7 @@ function npmToBun(_m, command) {
         case 'list':
         case 'ls':
             // 'npm ls' => 'bun pm ls'
-            args = convertInstallArgs(args);
+            args = convertInstallArgs$1(args);
             args[0] = 'ls';
             args.unshift('pm');
             break;
@@ -609,7 +609,7 @@ function npmToBun(_m, command) {
             break;
         case 'link':
         case 'ln':
-            args = convertInstallArgs(args);
+            args = convertInstallArgs$1(args);
             args[0] = 'link';
             break;
         case 'stop':
@@ -635,6 +635,118 @@ function npmToBun(_m, command) {
     return "".concat(cmd, " ").concat(filtered.join(' ')).concat(cmd === 'npm' ? "\n# couldn't auto-convert command" : '').replace('=', ' ');
 }
 
+function convertInstallArgs(args) {
+    // Deno's `deno add` mostly conforms to the other managers' add flags, but it
+    // has no concept of the various npm `--save*` flags (dependencies are always
+    // written to the config file), so those are dropped.
+    return args.map(function (item) {
+        switch (item) {
+            case '--save-dev':
+            case '--development':
+            case '-D':
+                return '--dev';
+            case '--save':
+            case '-S':
+            case '--save-prod':
+            case '-P':
+            case '--save-exact':
+            case '-E':
+            case '--no-save':
+                return '';
+            default:
+                return item;
+        }
+    });
+}
+function npmToDeno(_m, command) {
+    var args = parse((command || '').trim());
+    var index = args.findIndex(function (a) { return a === '--'; });
+    if (index >= 0) {
+        args.splice(index, 1);
+    }
+    var cmd = 'deno';
+    switch (args[0]) {
+        case 'install':
+        case 'i':
+        case 'add':
+            if (args.length === 1) {
+                args = ['install'];
+            }
+            else if (args.some(function (a) { return a === '-g' || a === '--global'; })) {
+                // Global installs map to Deno's global tool installer, which needs an
+                // explicit `npm:` specifier since there is no local config to resolve from.
+                var rest = args.slice(1).filter(function (a) { return a !== '-g' && a !== '--global'; });
+                var packages = rest.filter(function (a) { return !a.startsWith('-'); }).map(function (p) { return "npm:".concat(p); });
+                var flags = rest.filter(function (a) { return a.startsWith('-'); });
+                args = ['install', '-g'].concat(packages).concat(flags);
+            }
+            else {
+                args[0] = 'add';
+                args = convertInstallArgs(args);
+            }
+            break;
+        case 'uninstall':
+        case 'un':
+        case 'remove':
+        case 'r':
+        case 'rm':
+            args[0] = 'remove';
+            args = args.filter(function (a) { return a !== '-g' && a !== '--global' && a !== '--save-dev' && a !== '-D'; });
+            break;
+        case 'run':
+            // `npm run <script>` -> `deno task <script>`
+            args[0] = 'task';
+            break;
+        case 'test':
+        case 't':
+        case 'tst':
+            args[0] = 'test';
+            break;
+        case 'start':
+        case 'stop':
+            // `npm start` -> `deno task start`
+            args.unshift('task');
+            break;
+        case 'init':
+        case 'create':
+            if (args[1]) {
+                if (args[1].startsWith('@')) {
+                    // `npm init @scope/foo` -> `deno run -A npm:@scope/create-foo`
+                    cmd = 'deno run -A';
+                    args[1] = "npm:".concat(args[1].replace('/', '/create-'));
+                    args = args.slice(1);
+                }
+                else if (!args[1].startsWith('-')) {
+                    // `npm create foo` -> `deno run -A npm:create-foo`
+                    cmd = 'deno run -A';
+                    args[1] = "npm:create-".concat(args[1].replace('@latest', ''));
+                    args = args.slice(1);
+                }
+                else {
+                    args[0] = 'init';
+                }
+            }
+            else {
+                args[0] = 'init';
+            }
+            break;
+        case 'exec':
+            // `npm exec <pkg>` -> `deno run -A npm:<pkg>`
+            cmd = 'deno run -A';
+            args.splice(0, 1);
+            if (args[0]) {
+                args[0] = "npm:".concat(args[0]);
+            }
+            break;
+        default:
+            // No clean Deno equivalent; keep the npm command.
+            cmd = 'npm';
+            break;
+    }
+    var filtered = args.filter(Boolean).filter(function (arg) { return arg !== '--'; });
+    return "".concat(cmd, " ").concat(filtered.join(' ')).concat(cmd === 'npm' ? "\n# couldn't auto-convert command" : '').trim();
+}
+
 /**
  * Converts between npm and yarn command
  */
@@ -650,6 +762,12 @@ function convert(str, to) {
                 : str.includes('pnpm dlx')
                     ? 'pnpm dlx'
                     : 'bun x';
+        if (to === 'deno') {
+            // Deno runs one-off binaries with `deno run -A npm:<pkg>`; the `npm:`
+            // specifier attaches directly to the package, so consume the executor's
+            // trailing space too.
+            return str.replace("".concat(executor, " "), 'deno run -A npm:');
+        }
         return str.replace(executor, executorCommands[to]);
     }
     else if (to === 'npm') {
@@ -660,6 +778,9 @@ function convert(str, to) {
     }
     else if (to === 'bun') {
         return str.replace(/npm(?: +([^&\n\r]*))?/gm, npmToBun);
+    }
+    else if (to === 'deno') {
+        return str.replace(/npm(?: +([^&\n\r]*))?/gm, npmToDeno);
     }
     else {
         return str.replace(/npm(?: +([^&\n\r]*))?/gm, npmToYarn);

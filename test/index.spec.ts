@@ -662,3 +662,56 @@ describe('to bun x tests', () => {
     })
   })
 })
+
+describe('NPM to Deno tests', () => {
+  const tests: [npm: string, deno: string][] = [
+    // install
+    ['npm install', 'deno install'],
+    ['npm i', 'deno install'],
+    ['npm install squirrelly', 'deno add squirrelly'],
+    ['npm i squirrelly', 'deno add squirrelly'],
+    ['npm install foo bar', 'deno add foo bar'],
+    ['npm install squirrelly --save-dev', 'deno add squirrelly --dev'],
+    ['npm install squirrelly -D', 'deno add squirrelly --dev'],
+    ['npm install squirrelly --save', 'deno add squirrelly'],
+    ['npm install squirrelly --save-exact', 'deno add squirrelly'],
+    ['npm install squirrelly --no-save', 'deno add squirrelly'],
+    ['npm install -g squirrelly', 'deno install -g npm:squirrelly'],
+    ['npm install squirrelly -g', 'deno install -g npm:squirrelly'],
+    // uninstall / remove
+    ['npm uninstall squirrelly', 'deno remove squirrelly'],
+    ['npm remove squirrelly', 'deno remove squirrelly'],
+    ['npm r squirrelly', 'deno remove squirrelly'],
+    ['npm rm squirrelly', 'deno remove squirrelly'],
+    // run / test / start / stop
+    ['npm run', 'deno task'],
+    ['npm run build', 'deno task build'],
+    ['npm test', 'deno test'],
+    ['npm t', 'deno test'],
+    ['npm start', 'deno task start'],
+    ['npm stop', 'deno task stop'],
+    // init / create
+    ['npm init', 'deno init'],
+    ['npm init -y', 'deno init -y'],
+    ['npm init esm --yes', 'deno run -A npm:create-esm --yes'],
+    ['npm create vite', 'deno run -A npm:create-vite'],
+    ['npm create @scope/foo', 'deno run -A npm:@scope/create-foo'],
+    // exec
+    ['npm exec custom', 'deno run -A npm:custom'],
+    ['npm exec custom -- --version', 'deno run -A npm:custom --version'],
+    // npx -> deno run
+    ['npx create-next-app', 'deno run -A npm:create-next-app'],
+    ['npx prettier --help', 'deno run -A npm:prettier --help'],
+    ['npx prettier -w .', 'deno run -A npm:prettier -w .'],
+    [
+      'npx @neutrinojs/create-project my-app',
+      'deno run -A npm:@neutrinojs/create-project my-app',
+    ],
+    // no clean Deno equivalent -> keep npm command
+    ['npm ci', "npm ci\n# couldn't auto-convert command"],
+  ]
+
+  it.each(tests)('%s', (npmValue, denoValue) => {
+    expect(convert(npmValue, 'deno')).toEqual(denoValue)
+  })
+})
