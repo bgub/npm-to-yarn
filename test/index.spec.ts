@@ -683,6 +683,12 @@ describe('NPM to Deno tests', () => {
     ['npm remove squirrelly', 'deno remove squirrelly'],
     ['npm r squirrelly', 'deno remove squirrelly'],
     ['npm rm squirrelly', 'deno remove squirrelly'],
+    ['npm uninstall -g squirrelly', 'deno uninstall squirrelly'],
+    // ci / outdated / update
+    ['npm ci', 'deno ci'],
+    ['npm outdated', 'deno outdated'],
+    ['npm update', 'deno outdated --update'],
+    ['npm update foo', 'deno outdated --update foo'],
     // run / test / start / stop
     ['npm run', 'deno task'],
     ['npm run build', 'deno task build'],
@@ -693,9 +699,9 @@ describe('NPM to Deno tests', () => {
     // init / create
     ['npm init', 'deno init'],
     ['npm init -y', 'deno init -y'],
-    ['npm init esm --yes', 'deno create esm --yes'],
-    ['npm create vite', 'deno create vite'],
-    ['npm create @scope/foo', 'deno create @scope/foo'],
+    ['npm init esm --yes', 'deno create --npm esm --yes'],
+    ['npm create vite', 'deno create --npm vite'],
+    ['npm create @scope/foo', 'deno create --npm @scope/foo'],
     // exec
     ['npm exec custom', 'deno x custom'],
     ['npm exec custom -- --version', 'deno x custom --version'],
@@ -708,7 +714,7 @@ describe('NPM to Deno tests', () => {
       'deno x @neutrinojs/create-project my-app',
     ],
     // no clean Deno equivalent -> keep npm command
-    ['npm ci', "npm ci\n# couldn't auto-convert command"],
+    ['npm dedupe', "npm dedupe\n# couldn't auto-convert command"],
   ]
 
   it.each(tests)('%s', (npmValue, denoValue) => {

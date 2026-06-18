@@ -53,10 +53,25 @@ export function npmToDeno (_m: string, command: string): string {
     case 'remove':
     case 'r':
     case 'rm':
-      args[0] = 'remove'
-      args = args.filter(
-        a => a !== '-g' && a !== '--global' && a !== '--save-dev' && a !== '-D'
-      )
+      if (args.some(a => a === '-g' || a === '--global')) {
+        // Global removals use Deno's bin uninstaller.
+        args = ['uninstall'].concat(args.slice(1).filter(a => !a.startsWith('-')))
+      } else {
+        args[0] = 'remove'
+        args = args.filter(a => a !== '--save-dev' && a !== '-D')
+      }
+      break
+    case 'ci':
+      // `npm ci` -> `deno ci`
+      break
+    case 'outdated':
+      // `npm outdated` -> `deno outdated`
+      break
+    case 'update':
+    case 'up':
+      // `npm update` -> `deno outdated --update`
+      args[0] = 'outdated'
+      args.splice(1, 0, '--update')
       break
     case 'run':
       // `npm run <script>` -> `deno task <script>`
@@ -76,9 +91,11 @@ export function npmToDeno (_m: string, command: string): string {
       break
     case 'init':
     case 'create':
-      // `npm init`/`npm create <starter>` -> `deno init`/`deno create <starter>`
+      // `npm init` -> `deno init`;
+      // `npm create <starter>` -> `deno create --npm <starter>`
       if (args[1] && !args[1].startsWith('-')) {
         args[0] = 'create'
+        args.splice(1, 0, '--npm')
       } else {
         args[0] = 'init'
       }
