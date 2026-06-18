@@ -695,8 +695,8 @@
             case 'r':
             case 'rm':
                 if (args.some(function (a) { return a === '-g' || a === '--global'; })) {
-                    // Global removals use Deno's bin uninstaller.
-                    args = ['uninstall'].concat(args.slice(1).filter(function (a) { return !a.startsWith('-'); }));
+                    // Global removals use Deno's bin uninstaller (`deno uninstall --global`).
+                    args = ['uninstall', '--global'].concat(args.slice(1).filter(function (a) { return !a.startsWith('-'); }));
                 }
                 else {
                     args[0] = 'remove';

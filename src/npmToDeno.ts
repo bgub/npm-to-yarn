@@ -54,8 +54,10 @@ export function npmToDeno (_m: string, command: string): string {
     case 'r':
     case 'rm':
       if (args.some(a => a === '-g' || a === '--global')) {
-        // Global removals use Deno's bin uninstaller.
-        args = ['uninstall'].concat(args.slice(1).filter(a => !a.startsWith('-')))
+        // Global removals use Deno's bin uninstaller (`deno uninstall --global`).
+        args = ['uninstall', '--global'].concat(
+          args.slice(1).filter(a => !a.startsWith('-'))
+        )
       } else {
         args[0] = 'remove'
         args = args.filter(a => a !== '--save-dev' && a !== '-D')

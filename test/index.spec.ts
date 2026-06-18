@@ -683,7 +683,7 @@ describe('NPM to Deno tests', () => {
     ['npm remove squirrelly', 'deno remove squirrelly'],
     ['npm r squirrelly', 'deno remove squirrelly'],
     ['npm rm squirrelly', 'deno remove squirrelly'],
-    ['npm uninstall -g squirrelly', 'deno uninstall squirrelly'],
+    ['npm uninstall -g squirrelly', 'deno uninstall --global squirrelly'],
     // ci / outdated / update
     ['npm ci', 'deno ci'],
     ['npm outdated', 'deno outdated'],
