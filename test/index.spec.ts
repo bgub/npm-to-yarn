@@ -674,8 +674,17 @@ describe('NPM to Deno tests', () => {
     ['npm install squirrelly --save-dev', 'deno add squirrelly --dev'],
     ['npm install squirrelly -D', 'deno add squirrelly --dev'],
     ['npm install squirrelly --save', 'deno add squirrelly'],
-    ['npm install squirrelly --save-exact', 'deno add squirrelly'],
-    ['npm install squirrelly --no-save', 'deno add squirrelly'],
+    ['npm install squirrelly --save-exact', 'deno add squirrelly --save-exact'],
+    ['npm install squirrelly -E', 'deno add squirrelly --save-exact'],
+    [
+      'npm install squirrelly --save-optional',
+      'deno add squirrelly --save-optional',
+    ],
+    ['npm install squirrelly -O', 'deno add squirrelly --save-optional'],
+    ['npm install squirrelly --no-save', 'deno add squirrelly --no-save'],
+    // package names that merely contain an executor substring are not executors
+    ['npm install npx', 'deno add npx'],
+    ['npm install npx-prettier', 'deno add npx-prettier'],
     ['npm install -g squirrelly', 'deno install -g squirrelly'],
     ['npm install squirrelly -g', 'deno install -g squirrelly'],
     // uninstall / remove
