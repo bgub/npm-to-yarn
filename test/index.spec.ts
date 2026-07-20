@@ -662,3 +662,71 @@ describe('to bun x tests', () => {
     })
   })
 })
+
+describe('NPM to Deno tests', () => {
+  const tests: [npm: string, deno: string][] = [
+    // install
+    ['npm install', 'deno install'],
+    ['npm i', 'deno install'],
+    ['npm install squirrelly', 'deno add squirrelly'],
+    ['npm i squirrelly', 'deno add squirrelly'],
+    ['npm install foo bar', 'deno add foo bar'],
+    ['npm install squirrelly --save-dev', 'deno add squirrelly --dev'],
+    ['npm install squirrelly -D', 'deno add squirrelly --dev'],
+    ['npm install squirrelly --save', 'deno add squirrelly'],
+    ['npm install squirrelly --save-exact', 'deno add squirrelly --save-exact'],
+    ['npm install squirrelly -E', 'deno add squirrelly --save-exact'],
+    [
+      'npm install squirrelly --save-optional',
+      'deno add squirrelly --save-optional',
+    ],
+    ['npm install squirrelly -O', 'deno add squirrelly --save-optional'],
+    ['npm install squirrelly --no-save', 'deno add squirrelly --no-save'],
+    // package names that merely contain an executor substring are not executors
+    ['npm install npx', 'deno add npx'],
+    ['npm install npx-prettier', 'deno add npx-prettier'],
+    ['npm install -g squirrelly', 'deno install -g squirrelly'],
+    ['npm install squirrelly -g', 'deno install -g squirrelly'],
+    // uninstall / remove
+    ['npm uninstall squirrelly', 'deno remove squirrelly'],
+    ['npm remove squirrelly', 'deno remove squirrelly'],
+    ['npm r squirrelly', 'deno remove squirrelly'],
+    ['npm rm squirrelly', 'deno remove squirrelly'],
+    ['npm uninstall -g squirrelly', 'deno uninstall --global squirrelly'],
+    // ci / outdated / update
+    ['npm ci', 'deno ci'],
+    ['npm outdated', 'deno outdated'],
+    ['npm update', 'deno update'],
+    ['npm update foo', 'deno update foo'],
+    // run / test / start / stop
+    ['npm run', 'deno task'],
+    ['npm run build', 'deno task build'],
+    ['npm test', 'deno task test'],
+    ['npm t', 'deno task test'],
+    ['npm start', 'deno task start'],
+    ['npm stop', 'deno task stop'],
+    // init / create
+    ['npm init', 'deno init'],
+    ['npm init -y', 'deno init -y'],
+    ['npm init esm --yes', 'deno create --npm esm --yes'],
+    ['npm create vite', 'deno create --npm vite'],
+    ['npm create @scope/foo', 'deno create --npm @scope/foo'],
+    // exec
+    ['npm exec custom', 'deno x custom'],
+    ['npm exec custom -- --version', 'deno x custom --version'],
+    // npx -> deno x
+    ['npx create-next-app', 'deno x create-next-app'],
+    ['npx prettier --help', 'deno x prettier --help'],
+    ['npx prettier -w .', 'deno x prettier -w .'],
+    [
+      'npx @neutrinojs/create-project my-app',
+      'deno x @neutrinojs/create-project my-app',
+    ],
+    // no clean Deno equivalent -> keep npm command
+    ['npm dedupe', "npm dedupe\n# couldn't auto-convert command"],
+  ]
+
+  it.each(tests)('%s', (npmValue, denoValue) => {
+    expect(convert(npmValue, 'deno')).toEqual(denoValue)
+  })
+})
