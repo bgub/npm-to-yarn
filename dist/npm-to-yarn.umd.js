@@ -643,22 +643,26 @@
     }
 
     function convertInstallArgs(args) {
-        // Deno's `deno add` mostly conforms to the other managers' add flags, but it
-        // has no concept of the various npm `--save*` flags (dependencies are always
-        // written to the config file), so those are dropped.
+        // Map npm's install flags onto `deno add`'s equivalents. `deno add` supports
+        // `--dev`, `--save-exact` and `--save-optional` (as of Deno 2.9.3), so those
+        // pass through; npm's default `--save`/`--save-prod` are implicit (Deno
+        // always writes to the config file unless told otherwise) and dropped.
         return args.map(function (item) {
             switch (item) {
                 case '--save-dev':
                 case '--development':
                 case '-D':
                     return '--dev';
+                case '--save-exact':
+                case '-E':
+                    return '--save-exact';
+                case '--save-optional':
+                case '-O':
+                    return '--save-optional';
                 case '--save':
                 case '-S':
                 case '--save-prod':
                 case '-P':
-                case '--save-exact':
-                case '-E':
-                case '--no-save':
                     return '';
                 default:
                     return item;
@@ -760,17 +764,12 @@
      * Converts between npm and yarn command
      */
     function convert(str, to) {
-        if (str.includes('npx') ||
-            str.includes('yarn dlx') ||
-            str.includes('pnpm dlx') ||
-            str.includes('bun x')) {
-            var executor = str.includes('npx')
-                ? 'npx'
-                : str.includes('yarn dlx')
-                    ? 'yarn dlx'
-                    : str.includes('pnpm dlx')
-                        ? 'pnpm dlx'
-                        : 'bun x';
+        // Detect executor commands (npx / yarn dlx / …) only when they lead the
+        // command, so package names that merely contain an executor substring
+        // (e.g. `npm install npx-prettier`) still go through the normal mapping.
+        var trimmed = str.trimStart();
+        var executor = ['npx', 'yarn dlx', 'pnpm dlx', 'bun x'].find(function (e) { return trimmed === e || trimmed.startsWith(e + ' '); });
+        if (executor) {
             return str.replace(executor, executorCommands[to]);
         }
         else if (to === 'npm') {
