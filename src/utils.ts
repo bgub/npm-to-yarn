@@ -114,5 +114,6 @@ export const executorCommands = {
   yarn: 'yarn dlx',
   pnpm: 'pnpm dlx',
   bun: 'bun x',
-  deno: 'deno x'
+  deno: 'deno x',
+  nub: 'nubx'
 }

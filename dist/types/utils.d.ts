@@ -7,4 +7,5 @@ export declare const executorCommands: {
     pnpm: string;
     bun: string;
     deno: string;
+    nub: string;
 };

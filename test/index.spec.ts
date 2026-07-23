@@ -730,3 +730,105 @@ describe('NPM to Deno tests', () => {
     expect(convert(npmValue, 'deno')).toEqual(denoValue)
   })
 })
+
+describe('NPM to Nub tests', () => {
+  const tests: [npm: string, nub: string][] = [
+    // install
+    ['npm install', 'nub install'],
+    ['npm i', 'nub i'],
+    ['npm install squirrelly', 'nub add squirrelly'],
+    ['npm i squirrelly', 'nub add squirrelly'],
+    ['npm install foo bar', 'nub add foo bar'],
+    ['npm install squirrelly --save-dev', 'nub add squirrelly --save-dev'],
+    ['npm install squirrelly -D', 'nub add squirrelly -D'],
+    ['npm install squirrelly --save', 'nub add squirrelly'],
+    ['npm install squirrelly -S', 'nub add squirrelly'],
+    ['npm install squirrelly --save-exact', 'nub add squirrelly --save-exact'],
+    ['npm install squirrelly -E', 'nub add squirrelly -E'],
+    ['npm install squirrelly --save-optional', 'nub add squirrelly --save-optional'],
+    ['npm install squirrelly -O', 'nub add squirrelly -O'],
+    ['npm install squirrelly --no-package-lock', 'nub add squirrelly --frozen-lockfile'],
+    // package names that merely contain an executor substring are not executors
+    ['npm install nubx', 'nub add nubx'],
+    ['npm install nubx-prettier', 'nub add nubx-prettier'],
+    // global
+    ['npm install -g squirrelly', 'nub add -g squirrelly'],
+    ['npm install squirrelly --global', 'nub add squirrelly --global'],
+    // uninstall / remove
+    ['npm uninstall squirrelly', 'nub remove squirrelly'],
+    ['npm remove squirrelly', 'nub remove squirrelly'],
+    ['npm r squirrelly', 'nub remove squirrelly'],
+    ['npm rm squirrelly', 'nub remove squirrelly'],
+    ['npm uninstall -g squirrelly', 'nub remove -g squirrelly'],
+    // ci / dedupe / prune / outdated / update
+    ['npm ci', 'nub ci'],
+    ['npm dedupe', 'nub dedupe'],
+    ['npm prune', 'nub prune'],
+    ['npm outdated', 'nub outdated'],
+    ['npm update', 'nub update'],
+    ['npm update foo', 'nub update foo'],
+    ['npm up', 'nub update'],
+    // rebuild / list / link
+    ['npm rebuild', 'nub rebuild'],
+    ['npm rb', 'nub rebuild'],
+    ['npm ls', 'nub ls'],
+    ['npm list', 'nub list'],
+    ['npm link', 'nub link'],
+    ['npm ln', 'nub link'],
+    ['npm unlink', 'nub unlink'],
+    ['npm pack', 'nub pack'],
+    // run: nub always needs an explicit `run`, never a bare-script shortcut
+    ['npm run', 'nub run'],
+    ['npm run build', 'nub run build'],
+    ['npm run dev', 'nub run dev'],
+    // test / start / stop run scripts -> `nub run <script>`
+    ['npm test', 'nub run test'],
+    ['npm t', 'nub run test'],
+    ['npm start', 'nub run start'],
+    ['npm stop', 'nub run stop'],
+    // init / create: nub has no `create` verb
+    ['npm init', 'nub init'],
+    ['npm init -y', 'nub init -y'],
+    ['npm init esm --yes', 'nubx create-esm --yes'],
+    ['npm create vite', 'nubx create-vite'],
+    ['npm create @scope/foo', 'nubx @scope/create-foo'],
+    // exec -> nubx
+    ['npm exec custom', 'nubx custom'],
+    ['npm exec custom -- --version', 'nubx custom --version'],
+    // npx -> nubx
+    ['npx create-next-app', 'nubx create-next-app'],
+    ['npx prettier --help', 'nubx prettier --help'],
+    ['npx prettier -w .', 'nubx prettier -w .'],
+    ['npx @neutrinojs/create-project my-app', 'nubx @neutrinojs/create-project my-app'],
+    // no clean nub equivalent -> keep npm command
+    ['npm doctor', "npm doctor\n# couldn't auto-convert command"],
+  ]
+
+  it.each(tests)('%s', (npmValue, nubValue) => {
+    expect(convert(npmValue, 'nub')).toEqual(nubValue)
+  })
+})
+
+describe('to nubx tests', () => {
+  const tests: [source: string, nub: string][] = [
+    // npx -> ...
+    ['npx create-next-app', 'nubx create-next-app'],
+    ['npx prettier --help', 'nubx prettier --help'],
+    ['npx prettier -w .', 'nubx prettier -w .'],
+    ['npx @neutrinojs/create-project my-app', 'nubx @neutrinojs/create-project my-app'],
+    ['npx create-react-app my-app --template typescript', 'nubx create-react-app my-app --template typescript'],
+    // yarn dlx -> ...
+    ['yarn dlx create-next-app', 'nubx create-next-app'],
+    ['yarn dlx prettier --help', 'nubx prettier --help'],
+    // pnpm dlx -> ...
+    ['pnpm dlx create-next-app', 'nubx create-next-app'],
+    ['pnpm dlx prettier --help', 'nubx prettier --help'],
+    // bun x -> ...
+    ['bun x create-next-app', 'nubx create-next-app'],
+    ['bun x prettier --help', 'nubx prettier --help'],
+  ]
+
+  it.each(tests)('%s', (sourceValue, nubValue) => {
+    expect(convert(sourceValue, 'nub')).toEqual(nubValue)
+  })
+})
