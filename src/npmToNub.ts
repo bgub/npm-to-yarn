@@ -1,17 +1,15 @@
 import { parse } from './command'
 
 function convertInstallArgs (args: string[]): string[] {
-  // nub's PM CLI mirrors pnpm's, so its install flags follow pnpm's: `--save`/`-S`
-  // is the default and dropped, `--no-package-lock` maps to `--frozen-lockfile`,
-  // and everything else (`-D`/`--save-dev`, `-g`/`--global`, `-E`/`--save-exact`,
-  // `-O`/`--save-optional`, …) passes through unchanged.
+  // nub's PM CLI mirrors pnpm's, so production dependencies are the default.
+  // Drop npm's explicit production-save flags and pass supported flags through.
   return args.map(item => {
     switch (item) {
       case '--save':
       case '-S':
+      case '--save-prod':
+      case '-P':
         return ''
-      case '--no-package-lock':
-        return '--frozen-lockfile'
       default:
         return item
     }
@@ -19,7 +17,15 @@ function convertInstallArgs (args: string[]): string[] {
 }
 
 export function npmToNub (_m: string, command: string): string {
-  let args = parse((command || '').trim())
+  const normalizedCommand = (command || '').trim()
+  let args = parse(normalizedCommand)
+
+  // Nub has no equivalent for disabling lockfile reads and writes. In
+  // particular, --frozen-lockfile is the opposite: it requires a valid,
+  // unchanged lockfile. Keep npm rather than changing the command's meaning.
+  if (args.includes('--no-package-lock')) {
+    return `npm ${normalizedCommand}\n# couldn't auto-convert command`
+  }
 
   const index = args.findIndex(a => a === '--')
   if (index >= 0) {
@@ -65,6 +71,9 @@ export function npmToNub (_m: string, command: string): string {
     case 'run':
       // nub always requires an explicit `run`; it has no implicit script shortcut,
       // so `npm run <script>` maps 1:1 and never collapses to `nub <script>`.
+      break
+    case 'run-script':
+      args[0] = 'run'
       break
     case 'test':
     case 't':

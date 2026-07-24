@@ -743,11 +743,16 @@ describe('NPM to Nub tests', () => {
     ['npm install squirrelly -D', 'nub add squirrelly -D'],
     ['npm install squirrelly --save', 'nub add squirrelly'],
     ['npm install squirrelly -S', 'nub add squirrelly'],
+    ['npm install squirrelly --save-prod', 'nub add squirrelly'],
+    ['npm install squirrelly -P', 'nub add squirrelly'],
     ['npm install squirrelly --save-exact', 'nub add squirrelly --save-exact'],
     ['npm install squirrelly -E', 'nub add squirrelly -E'],
     ['npm install squirrelly --save-optional', 'nub add squirrelly --save-optional'],
     ['npm install squirrelly -O', 'nub add squirrelly -O'],
-    ['npm install squirrelly --no-package-lock', 'nub add squirrelly --frozen-lockfile'],
+    [
+      'npm install squirrelly --no-package-lock',
+      "npm install squirrelly --no-package-lock\n# couldn't auto-convert command",
+    ],
     // package names that merely contain an executor substring are not executors
     ['npm install nubx', 'nub add nubx'],
     ['npm install nubx-prettier', 'nub add nubx-prettier'],
@@ -781,6 +786,7 @@ describe('NPM to Nub tests', () => {
     ['npm run', 'nub run'],
     ['npm run build', 'nub run build'],
     ['npm run dev', 'nub run dev'],
+    ['npm run-script build', 'nub run build'],
     // test / start / stop run scripts -> `nub run <script>`
     ['npm test', 'nub run test'],
     ['npm t', 'nub run test'],
