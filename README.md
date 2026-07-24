@@ -36,6 +36,9 @@ convert('npm install squirrelly', 'yarn')
 convert('npm install squirrelly', 'deno')
 // deno add squirrelly
 
+convert('npm install squirrelly', 'nub')
+// nub add squirrelly
+
 // npx conversions
 
 convert('npx create-next-app', 'yarn')
@@ -43,6 +46,9 @@ convert('npx create-next-app', 'yarn')
 
 convert('npx create-next-app', 'deno')
 // deno x create-next-app
+
+convert('npx create-next-app', 'nub')
+// nubx create-next-app
 ```
 
 `npm-to-yarn` exposes a UMD build, so you can also install it with a CDN (it exposes global variable `n2y`)
@@ -53,7 +59,7 @@ convert('npx create-next-app', 'deno')
 /**
  * Converts between npm and yarn command
  */
-export default function convert (str: string, to: 'npm' | 'yarn' | 'pnpm' | 'bun' | 'deno'): string
+export default function convert (str: string, to: 'npm' | 'yarn' | 'pnpm' | 'bun' | 'deno' | 'nub'): string
 ```
 
 ## ✔️ Tests

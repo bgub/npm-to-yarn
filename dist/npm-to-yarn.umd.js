@@ -58,7 +58,8 @@
         yarn: 'yarn dlx',
         pnpm: 'pnpm dlx',
         bun: 'bun x',
-        deno: 'deno x'
+        deno: 'deno x',
+        nub: 'nubx'
     };
 
     function parse(command) {
@@ -216,7 +217,7 @@
         }
     }
 
-    function convertInstallArgs$2(args) {
+    function convertInstallArgs$3(args) {
         if (args.includes('--global') || args.includes('-g')) {
             args.unshift('global');
         }
@@ -252,14 +253,14 @@
                 return ['install'];
             }
             args[0] = 'add';
-            return convertInstallArgs$2(args);
+            return convertInstallArgs$3(args);
         },
         i: function (args) {
             return npmToYarnTable.install(args);
         },
         uninstall: function (args) {
             args[0] = 'remove';
-            return convertInstallArgs$2(args);
+            return convertInstallArgs$3(args);
         },
         un: function (args) {
             return npmToYarnTable.uninstall(args);
@@ -516,7 +517,7 @@
         }
     }
 
-    function convertInstallArgs$1(args) {
+    function convertInstallArgs$2(args) {
         // bun uses -g and --global flags
         // bun mostly conforms to Yarn's CLI
         return args.map(function (item) {
@@ -564,7 +565,7 @@
                 else {
                     args[0] = 'add';
                 }
-                args = convertInstallArgs$1(args);
+                args = convertInstallArgs$2(args);
                 break;
             case 'uninstall':
             case 'un':
@@ -572,7 +573,7 @@
             case 'r':
             case 'rm':
                 args[0] = 'remove';
-                args = convertInstallArgs$1(args);
+                args = convertInstallArgs$2(args);
                 break;
             case 'cache':
                 if (args[1] === 'clean') {
@@ -592,7 +593,7 @@
             case 'list':
             case 'ls':
                 // 'npm ls' => 'bun pm ls'
-                args = convertInstallArgs$1(args);
+                args = convertInstallArgs$2(args);
                 args[0] = 'ls';
                 args.unshift('pm');
                 break;
@@ -616,7 +617,7 @@
                 break;
             case 'link':
             case 'ln':
-                args = convertInstallArgs$1(args);
+                args = convertInstallArgs$2(args);
                 args[0] = 'link';
                 break;
             case 'stop':
@@ -642,7 +643,7 @@
         return "".concat(cmd, " ").concat(filtered.join(' ')).concat(cmd === 'npm' ? "\n# couldn't auto-convert command" : '').replace('=', ' ');
     }
 
-    function convertInstallArgs(args) {
+    function convertInstallArgs$1(args) {
         // Map npm's install flags onto `deno add`'s equivalents. `deno add` supports
         // `--dev`, `--save-exact` and `--save-optional` (as of Deno 2.9.3), so those
         // pass through; npm's default `--save`/`--save-prod` are implicit (Deno
@@ -690,7 +691,7 @@
                 }
                 else {
                     args[0] = 'add';
-                    args = convertInstallArgs(args);
+                    args = convertInstallArgs$1(args);
                 }
                 break;
             case 'uninstall':
@@ -760,6 +761,119 @@
         return "".concat(cmd, " ").concat(filtered.join(' ')).concat(cmd === 'npm' ? "\n# couldn't auto-convert command" : '').trim();
     }
 
+    function convertInstallArgs(args) {
+        // nub's PM CLI mirrors pnpm's, so its install flags follow pnpm's: `--save`/`-S`
+        // is the default and dropped, `--no-package-lock` maps to `--frozen-lockfile`,
+        // and everything else (`-D`/`--save-dev`, `-g`/`--global`, `-E`/`--save-exact`,
+        // `-O`/`--save-optional`, …) passes through unchanged.
+        return args.map(function (item) {
+            switch (item) {
+                case '--save':
+                case '-S':
+                    return '';
+                case '--no-package-lock':
+                    return '--frozen-lockfile';
+                default:
+                    return item;
+            }
+        });
+    }
+    function npmToNub(_m, command) {
+        var args = parse((command || '').trim());
+        var index = args.findIndex(function (a) { return a === '--'; });
+        if (index >= 0) {
+            args.splice(index, 1);
+        }
+        var cmd = 'nub';
+        switch (args[0]) {
+            case 'install':
+            case 'i':
+                // `npm install` -> `nub install`; with packages -> `nub add <pkgs>`
+                if (args.filter(function (item) { return !item.startsWith('-'); }).length > 1) {
+                    args[0] = 'add';
+                }
+                args = convertInstallArgs(args);
+                break;
+            case 'uninstall':
+            case 'un':
+            case 'remove':
+            case 'r':
+            case 'rm':
+                args[0] = 'remove';
+                args = convertInstallArgs(args);
+                break;
+            case 'ci':
+                // clean, strict install from the lockfile
+                break;
+            case 'dedupe':
+            case 'prune':
+            case 'outdated':
+                break;
+            case 'update':
+            case 'up':
+                args[0] = 'update';
+                break;
+            case 'rebuild':
+            case 'rb':
+                args[0] = 'rebuild';
+                break;
+            case 'ls':
+            case 'list':
+                break;
+            case 'run':
+                // nub always requires an explicit `run`; it has no implicit script shortcut,
+                // so `npm run <script>` maps 1:1 and never collapses to `nub <script>`.
+                break;
+            case 'test':
+            case 't':
+            case 'tst':
+                // nub has no `nub test`; the `test` script runs via `nub run test`.
+                args = ['run', 'test'].concat(args.slice(1));
+                break;
+            case 'start':
+            case 'stop':
+                // Same rule: `npm start`/`npm stop` run scripts -> `nub run <script>`.
+                args.unshift('run');
+                break;
+            case 'init':
+            case 'create':
+                // nub has no `create` verb: an initializer runs its `create-*` package via
+                // nubx, while a bare `npm init` scaffolds through `nub init`.
+                if (args[1] && args[1].startsWith('@')) {
+                    cmd = 'nubx';
+                    args[1] = args[1].replace('/', '/create-');
+                    args = args.slice(1);
+                }
+                else if (args[1] && !args[1].startsWith('-')) {
+                    cmd = 'nubx';
+                    args[1] = "create-".concat(args[1].replace('@latest', ''));
+                    args = args.slice(1);
+                }
+                else {
+                    args[0] = 'init';
+                }
+                break;
+            case 'exec':
+                // `npm exec <pkg>` fetches-and-runs -> `nubx <pkg>`.
+                cmd = 'nubx';
+                args.splice(0, 1);
+                break;
+            case 'link':
+            case 'ln':
+                args[0] = 'link';
+                break;
+            case 'unlink':
+            case 'pack':
+                break;
+            default:
+                // No clean nub equivalent; keep the npm command.
+                cmd = 'npm';
+                break;
+        }
+        var filtered = args.filter(Boolean).filter(function (arg) { return arg !== '--'; });
+        return "".concat(cmd, " ").concat(filtered.join(' ')).concat(cmd === 'npm' ? "\n# couldn't auto-convert command" : '').trim();
+    }
+
     /**
      * Converts between npm and yarn command
      */
@@ -768,7 +882,7 @@
         // command, so package names that merely contain an executor substring
         // (e.g. `npm install npx-prettier`) still go through the normal mapping.
         var trimmed = str.trimStart();
-        var executor = ['npx', 'yarn dlx', 'pnpm dlx', 'bun x'].find(function (e) { return trimmed === e || trimmed.startsWith(e + ' '); });
+        var executor = ['npx', 'yarn dlx', 'pnpm dlx', 'bun x', 'nubx'].find(function (e) { return trimmed === e || trimmed.startsWith(e + ' '); });
         if (executor) {
             return str.replace(executor, executorCommands[to]);
         }
@@ -783,6 +897,9 @@
         }
         else if (to === 'deno') {
             return str.replace(/npm(?: +([^&\n\r]*))?/gm, npmToDeno);
+        }
+        else if (to === 'nub') {
+            return str.replace(/npm(?: +([^&\n\r]*))?/gm, npmToNub);
         }
         else {
             return str.replace(/npm(?: +([^&\n\r]*))?/gm, npmToYarn);
