@@ -40,6 +40,7 @@ export const yarnCLICommands = [
   'self-update',
   'tag',
   'team',
+  'up',
   'upgrade',
   'upgrade-interactive',
   'version',
@@ -116,4 +117,13 @@ export const executorCommands = {
   bun: 'bun x',
   deno: 'deno x',
   nub: 'nubx'
+}
+
+/**
+ * Whether `npm install` args name packages (so it maps to `add`). Flags alone,
+ * like `npm install --production`, stay `install`. Global installs keep their
+ * existing `add` / global mapping.
+ */
+export function installsPackages (args: string[]): boolean {
+  return args.slice(1).some(item => !item.startsWith('-') || item === '-g' || item === '--global')
 }

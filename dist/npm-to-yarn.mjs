@@ -39,6 +39,7 @@ var yarnCLICommands = [
     'self-update',
     'tag',
     'team',
+    'up',
     'upgrade',
     'upgrade-interactive',
     'version',
@@ -55,6 +56,14 @@ var executorCommands = {
     deno: 'deno x',
     nub: 'nubx'
 };
+/**
+ * Whether `npm install` args name packages (so it maps to `add`). Flags alone,
+ * like `npm install --production`, stay `install`. Global installs keep their
+ * existing `add` / global mapping.
+ */
+function installsPackages(args) {
+    return args.slice(1).some(function (item) { return !item.startsWith('-') || item === '-g' || item === '--global'; });
+}
 
 function parse(command) {
     var args = [];
@@ -243,8 +252,10 @@ function convertInstallArgs$3(args) {
 }
 var npmToYarnTable = {
     install: function (args) {
-        if (args.length === 1) {
-            return ['install'];
+        if (!installsPackages(args)) {
+            // only flags (e.g. `npm install --production`): `yarn add` needs packages
+            args[0] = 'install';
+            return convertInstallArgs$3(args);
         }
         args[0] = 'add';
         return convertInstallArgs$3(args);
@@ -553,12 +564,7 @@ function npmToBun(_m, command) {
     switch (args[0]) {
         case 'install':
         case 'i':
-            if (args.length === 1) {
-                args = ['install'];
-            }
-            else {
-                args[0] = 'add';
-            }
+            args[0] = installsPackages(args) ? 'add' : 'install';
             args = convertInstallArgs$2(args);
             break;
         case 'uninstall':
@@ -675,8 +681,9 @@ function npmToDeno(_m, command) {
         case 'install':
         case 'i':
         case 'add':
-            if (args.length === 1) {
-                args = ['install'];
+            if (!installsPackages(args)) {
+                args[0] = 'install';
+                args = convertInstallArgs$1(args);
             }
             else if (args.some(function (a) { return a === '-g' || a === '--global'; })) {
                 // Global installs map to Deno's global tool installer.
@@ -884,9 +891,15 @@ function convert(str, to) {
     // command, so package names that merely contain an executor substring
     // (e.g. `npm install npx-prettier`) still go through the normal mapping.
     var trimmed = str.trimStart();
-    var executor = ['npx', 'yarn dlx', 'pnpm dlx', 'bun x', 'nubx'].find(function (e) { return trimmed === e || trimmed.startsWith(e + ' '); });
+    var executor = ['npx', 'yarn dlx', 'pnpm dlx', 'bun x', 'deno x', 'nubx'].find(function (e) { return trimmed === e || trimmed.startsWith(e + ' '); });
     if (executor) {
-        return str.replace(executor, executorCommands[to]);
+        var result = str.replace(executor, executorCommands[to]);
+        if (executor === 'npx' && (to === 'yarn' || to === 'pnpm')) {
+            // `yarn dlx` and `pnpm dlx` reject npx's -y / --yes (skip the install
+            // prompt) flag. Only drop it before the package name.
+            return result.replace(/^(\s*\S+ dlx)(?: +(?:-y|--yes)(?= |$))+/, '$1');
+        }
+        return result;
     }
     else if (to === 'npm') {
         return str.replace(/yarn(?: +([^&\n\r]*))?/gm, yarnToNPM);

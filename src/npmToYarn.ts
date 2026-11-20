@@ -1,4 +1,4 @@
-import { unchangedCLICommands, yarnCLICommands } from './utils'
+import { installsPackages, unchangedCLICommands, yarnCLICommands } from './utils'
 import { parse } from './command'
 
 function convertInstallArgs (args: string[]) {
@@ -35,8 +35,10 @@ function convertInstallArgs (args: string[]) {
 
 const npmToYarnTable = {
   install (args: string[]) {
-    if (args.length === 1) {
-      return ['install']
+    if (!installsPackages(args)) {
+      // only flags (e.g. `npm install --production`): `yarn add` needs packages
+      args[0] = 'install'
+      return convertInstallArgs(args)
     }
     args[0] = 'add'
 

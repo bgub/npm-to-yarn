@@ -15,11 +15,17 @@ export default function convert (str: string, to: 'npm' | 'yarn' | 'pnpm' | 'bun
   // command, so package names that merely contain an executor substring
   // (e.g. `npm install npx-prettier`) still go through the normal mapping.
   const trimmed = str.trimStart()
-  const executor = ['npx', 'yarn dlx', 'pnpm dlx', 'bun x', 'nubx'].find(
+  const executor = ['npx', 'yarn dlx', 'pnpm dlx', 'bun x', 'deno x', 'nubx'].find(
     e => trimmed === e || trimmed.startsWith(e + ' ')
   )
   if (executor) {
-    return str.replace(executor, executorCommands[to])
+    const result = str.replace(executor, executorCommands[to])
+    if (executor === 'npx' && (to === 'yarn' || to === 'pnpm')) {
+      // `yarn dlx` and `pnpm dlx` reject npx's -y / --yes (skip the install
+      // prompt) flag. Only drop it before the package name.
+      return result.replace(/^(\s*\S+ dlx)(?: +(?:-y|--yes)(?= |$))+/, '$1')
+    }
+    return result
   } else if (to === 'npm') {
     return str.replace(/yarn(?: +([^&\n\r]*))?/gm, yarnToNPM)
   } else if (to === 'pnpm') {
