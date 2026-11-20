@@ -1,4 +1,5 @@
 import { parse } from './command'
+import { installsPackages } from './utils'
 
 function convertInstallArgs (args: string[]) {
   // bun uses -g and --global flags
@@ -58,11 +59,7 @@ export function npmToBun (_m: string, command: string): string {
   switch (args[0]) {
     case 'install':
     case 'i':
-      if (args.length === 1) {
-        args = ['install']
-      } else {
-        args[0] = 'add'
-      }
+      args[0] = installsPackages(args) ? 'add' : 'install'
       args = convertInstallArgs(args)
       break
     case 'uninstall':

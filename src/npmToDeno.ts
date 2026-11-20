@@ -1,4 +1,5 @@
 import { parse } from './command'
+import { installsPackages } from './utils'
 
 function convertInstallArgs (args: string[]): string[] {
   // Map npm's install flags onto `deno add`'s equivalents. `deno add` supports
@@ -41,8 +42,9 @@ export function npmToDeno (_m: string, command: string): string {
     case 'install':
     case 'i':
     case 'add':
-      if (args.length === 1) {
-        args = ['install']
+      if (!installsPackages(args)) {
+        args[0] = 'install'
+        args = convertInstallArgs(args)
       } else if (args.some(a => a === '-g' || a === '--global')) {
         // Global installs map to Deno's global tool installer.
         const packages = args.slice(1).filter(a => !a.startsWith('-'))

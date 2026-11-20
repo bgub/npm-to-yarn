@@ -9,3 +9,9 @@ export declare const executorCommands: {
     deno: string;
     nub: string;
 };
+/**
+ * Whether `npm install` args name packages (so it maps to `add`). Flags alone,
+ * like `npm install --production`, stay `install`. Global installs keep their
+ * existing `add` / global mapping.
+ */
+export declare function installsPackages(args: string[]): boolean;

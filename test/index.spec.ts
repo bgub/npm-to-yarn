@@ -99,6 +99,12 @@ describe('NPM tests', () => {
       'pnpm add squirrelly --no-save',
       'bun add squirrelly --no-save',
     ],
+    // install with flags only (no package names) stays `install`
+    ['npm install --production', 'yarn install --production', 'pnpm install --production', 'bun install --production'],
+    ['npm i --production', 'yarn install --production', 'pnpm i --production', 'bun install --production'],
+    ['npm install --no-package-lock', 'yarn install --no-lockfile', 'pnpm install --frozen-lockfile', 'bun install --no-save'],
+    ['npm install --legacy-peer-deps', 'yarn install --legacy-peer-deps', 'pnpm install --legacy-peer-deps', 'bun install --legacy-peer-deps'],
+    ['npm install --save', 'yarn install', 'pnpm install', 'bun install'],
     // uninstall
     ['npm r squirrelly', 'yarn remove squirrelly', 'pnpm remove squirrelly', 'bun remove squirrelly'],
     ['npm remove squirrelly', 'yarn remove squirrelly', 'pnpm remove squirrelly', 'bun remove squirrelly'],
@@ -355,6 +361,8 @@ describe('Yarn to NPM tests', () => {
     // install
     ['yarn', 'npm install'],
     ['yarn install', 'npm install'],
+    // Yarn 2+ `up` is a yarn command, not a package.json script
+    ['yarn up react', "npm up react\n# couldn't auto-convert command"],
     // add
     ['yarn add squirrelly', 'npm install squirrelly'],
     ['yarn add squirrelly --no-lockfile', 'npm install squirrelly --no-package-lock'],
@@ -444,6 +452,11 @@ describe('Yarn to NPM tests', () => {
 describe('to yarn dlx tests', () => {
   const tests: [npm: string, yarn: string][] = [
     // npx -> ...
+    // npx's -y / --yes prompt flag is not a yarn dlx option
+    ['npx -y create-react-app my-app', 'yarn dlx create-react-app my-app'],
+    ['npx --yes create-react-app my-app', 'yarn dlx create-react-app my-app'],
+    ['npx -y prettier -y', 'yarn dlx prettier -y'],
+    ['deno x create-next-app', 'yarn dlx create-next-app'],
     [
       'npx create-next-app',
       'yarn dlx create-next-app',
@@ -518,6 +531,9 @@ describe('to yarn dlx tests', () => {
 describe('to pnpm dlx tests', () => {
   const tests: [npm: string, pnpm: string][] = [
     // npx -> ...
+    ['npx -y create-next-app', 'pnpm dlx create-next-app'],
+    ['npx --yes create-next-app', 'pnpm dlx create-next-app'],
+    ['deno x create-next-app', 'pnpm dlx create-next-app'],
     [
       'npx create-next-app',
       'pnpm dlx create-next-app',
@@ -591,6 +607,8 @@ describe('to pnpm dlx tests', () => {
 
 describe('to bun x tests', () => {
   const tests: [npm: string, bun: string][] = [
+    // `bun x` accepts -y, so it is kept
+    ['npx -y create-next-app', 'bun x -y create-next-app'],
     // npx -> ...
     [
       'npx create-next-app',
@@ -668,6 +686,8 @@ describe('NPM to Deno tests', () => {
     // install
     ['npm install', 'deno install'],
     ['npm i', 'deno install'],
+    ['npm install --save', 'deno install'],
+    ['npm i --save-dev', 'deno install --dev'],
     ['npm install squirrelly', 'deno add squirrelly'],
     ['npm i squirrelly', 'deno add squirrelly'],
     ['npm install foo bar', 'deno add foo bar'],
